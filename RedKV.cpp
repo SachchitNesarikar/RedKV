@@ -43,21 +43,25 @@ void RedKV::setWithExpiryFromNow(const string& key, const string& value, time_t 
     set(key, value, expiry_epoch);
 }
 
-// Get key; returns false if key not found or expired
 bool RedKV::get(const string& key, string& value) {
-    shared_lock<shared_mutex> lock(_storeMutex);
-    auto it = _data.find(key);
-    if (it == _data.end()) {
-        return false;  // Key not found
+    // Phase 1: shared read
+    shared_lock<shared_mutex> rlock(_storeMutex);
+    auto it_read = _data.find(key);
+    if (it_read == _data.end()) return false;
+
+    if (it_read->second.exp >= time(nullptr)) {
+        value = it_read->second.v;
+        return true;
     }
 
-    // Check if the key has expired
-    if (it->second.exp < time(nullptr)) {
-        _data.erase(it);  // Remove expired key
-        return false;
+    // Phase 2: exclusive erase
+    unique_lock<shared_mutex> wlock(_storeMutex);
+    auto it_write = _data.find(key);
+    if (it_write != _data.end() && it_write->second.exp < time(nullptr)) {
+        _data.erase(it_write);
     }
 
-    // Key found and not expired
-    value = it->second.v;
-    return true;
+    return false;
 }
+
+
