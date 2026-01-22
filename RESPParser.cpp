@@ -20,14 +20,13 @@ string RESPParser::read_fd(int n) {
     return string(buf.data(), r);
 }
 
-
 bool RESPParser::cache_vitem(string& item) {
-    for (size_t i = 0; i < read_cache.size(); ++i) {
+    for (size_t i = 0; i < read_cache.size(); i++) {
         item += read_cache[i];
         if (item.size() >= 2 &&
             item[item.size() - 2] == '\r' &&
             item[item.size() - 1] == '\n') {
-            read_cache = read_cache.substr(i + 1);
+            read_cache = read_cache.substr(item.size());
             return true;
         }
     }

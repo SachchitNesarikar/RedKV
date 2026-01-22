@@ -52,6 +52,13 @@ public:
     // Get key; returns false if key not found or expired
     bool get(const string& key, string& value);
 
+    // Delete a key; returns true if key existed and was removed, false otherwise
+    bool del(const string& key);
+
+    bool exists(const std::string& key);
+
+    long long ttl(const std::string& key);
+
     // Disable copy and assignment
     RedKV(const RedKV&) = delete;
     RedKV& operator=(const RedKV&) = delete;

@@ -19,3 +19,6 @@ cmd_retn redis_echo(const vector<string>&);
 cmd_retn redis_set (const vector<string>&);
 cmd_retn redis_get (const vector<string>&);
 cmd_retn redis_config(const vector<string>&);
+cmd_retn redis_del(const vector<string>& req);
+cmd_retn redis_exists(const vector<string>& req);
+cmd_retn redis_ttl(const vector<string>& req);

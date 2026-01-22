@@ -64,4 +64,50 @@ bool RedKV::get(const string& key, string& value) {
     return false;
 }
 
+bool RedKV::del(const string& key) {
+    unique_lock<shared_mutex> lock(_storeMutex);
+
+    auto it = _data.find(key);
+    if (it == _data.end()) return false;
+
+    if (it->second.exp < time(nullptr)) {
+        _data.erase(it);
+        return false;
+    }
+
+    _data.erase(it);
+    return true;
+}
+
+bool RedKV::exists(const string& key) {
+    shared_lock<shared_mutex> lock(_storeMutex);
+
+    auto it = _data.find(key);
+    if (it == _data.end()) return false;
+
+    if (it->second.exp < time(nullptr)) {
+        return false;
+    }
+
+    return true;
+}
+
+long long RedKV::ttl(const string& key) {
+    shared_lock<shared_mutex> lock(_storeMutex);
+
+    auto it = _data.find(key);
+    if (it == _data.end())
+        return -2;
+
+    time_t now = time(nullptr);
+
+    if (it->second.exp < now)
+        return -2;
+
+    if (it->second.exp == numeric_limits<time_t>::max())
+        return -1;
+
+    return static_cast<long long>(it->second.exp - now);
+}
+
 
