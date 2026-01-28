@@ -3,6 +3,7 @@
 #include "RedSrvr.h"
 #include "cmd.h"
 #include "RedKV.h"
+#include "AOF.h"
 
 #include <atomic>
 #include <csignal>
@@ -25,13 +26,9 @@ void handle_sigint(int) {
     server_running = false;
 }
 
-/*
-Process one request and send RESP reply
-*/
 void process_request(vector<string>& req, int fd) {
     if (req.empty()) return;
 
-    // COMMAND must be RESP-valid or redis-cli WILL crash
     if (req[0] == "command") {
         const string resp = "*0\r\n";  // legal, minimal
         vector<char> buf(resp.begin(), resp.end());
@@ -62,9 +59,6 @@ void process_request(vector<string>& req, int fd) {
     wrt_exct(fd, buf, buf.size());
 }
 
-/*
-Client handler thread
-*/
 void handle_client(int client_fd) {
     RESPParser parser(client_fd);
 
@@ -77,7 +71,6 @@ void handle_client(int client_fd) {
             process_request(req, client_fd);
 
         } catch (const runtime_error&) {
-            // normal client disconnect → silent exit
             break;
         }
     }
@@ -85,9 +78,6 @@ void handle_client(int client_fd) {
     close(client_fd);
 }
 
-/*
-Server setup
-*/
 int setup_server() {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) die("socket");
@@ -124,6 +114,8 @@ void dispatch_clients(int server_fd) {
 
 int main() {
     signal(SIGINT, handle_sigint);
+
+    AOF::instance().load();
 
     int server_fd = setup_server();
     dispatch_clients(server_fd);

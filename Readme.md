@@ -22,16 +22,21 @@ This project focuses on systems fundamentals: networking, concurrency, protocol 
 - GET key
 - DEL key [key ...]
 - TTL key
+- KEYS pattern
 - EXISTS key [key ...]
+- SCAN cursor [MATCH pattern] [COUNT n]
 - CONFIG (stub, returns fixed response)
 - COMMAND (stub, for redis-cli compatibility)
 
 #### Behavior:
-- RESP protocol compatible with redis-cli
-- Lazy key expiry (expired keys removed on access)
-- Thread-safe reads and writes using shared_mutex
-- One thread per client connection
-- Malformed client input returns Redis-style errors and never crashes the server
+- RESP-compatible with `redis-cli`
+- Thread-safe concurrent access using `std::shared_mutex`
+- One OS thread per client connection
+- Lazy expiry on access (GET, DEL, TTL)
+- SCAN provides weakly-consistent iteration
+- Expired keys may appear briefly during SCAN
+- Expired keys are cleaned opportunistically during access and scans
+- Malformed client input never crashes the server
 
 
 #### Unsupported commands:
@@ -67,27 +72,30 @@ Server listening on port: 2000
 
 > DEL a
 
+> SCAN 0
+
 ### Concurrency model
 
 - One OS thread per client connection
 - Shared in-memory store protected by std::shared_mutex
-- Reads use shared_lock
-- Writes and deletions use unique_lock
-- Expired keys are deleted using a two-phase locking strategy to avoid races
+- Reads use shared_lock, writes and deletions use unique_lock
+- Expired keys are deleted lazily using scoped locking
+- No stop-the-world operations
 
 ### Expiry model
 
 - Expiry timestamps are stored per key
-- Keys are checked for expiry on GET
-- Expired keys are lazily deleted on access
-- EXISTS and TTL does not mutate state
+- Keys are checked for expiry on access
+- Expired keys are lazily deleted
+- EXISTS and TTL do not mutate state
 - No background expiry thread yet
 
 ### Known limitations
 
 - No persistence (RDB/AOF not implemented)
-- No KEYS yet
-- SET option parsing is still being hardened
+- No background expiry thread
+- No incremental rehashing yet
+- KEYS is blocking and O(n)
 - No graceful shutdown
 - No memory accounting or eviction
 - No authentication or access control

@@ -69,6 +69,17 @@ public:
     }
 };
 
+class Integer : public RedisObject {
+    long long value;
+public:
+    explicit Integer(long long v) : value(v) {}
+
+    std::string serialize() const override {
+        return ":" + std::to_string(value) + "\r\n";
+    }
+};
+
+
 } // namespace redis
 
 // ---------- Server error ----------
