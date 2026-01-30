@@ -115,7 +115,9 @@ void dispatch_clients(int server_fd) {
 int main() {
     signal(SIGINT, handle_sigint);
 
-    AOF::instance().load();
+    AOF::instance().open();
+
+    AOF::instance().replay();
 
     int server_fd = setup_server();
     dispatch_clients(server_fd);

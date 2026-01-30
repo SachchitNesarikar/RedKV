@@ -1,24 +1,16 @@
 #pragma once
-#include <fstream>
-#include <mutex>
-#include <vector>
 #include <string>
-using namespace std;
+#include <vector>
 
 class AOF {
-private:
-    std::ofstream ofs;
-    std::mutex mtx;
-    bool loading = false;
-
-    AOF();
-    ~AOF();
-
 public:
     static AOF& instance();
 
+    void open();
     void append(const std::vector<std::string>& cmd);
-    void load();
+    void replay();
+    bool is_loading() const;
 
-    bool is_loading() const { return loading; }
+private:
+    AOF() = default;
 };
