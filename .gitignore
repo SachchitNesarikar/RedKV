@@ -1,0 +1,24 @@
+# Build output
+bin/
+obj/
+*.o
+*.d
+*.a
+
+# Debug / profiling
+core
+core.*
+*.log
+callgrind.out.*
+perf.data*
+
+# Editors / tooling
+.vscode/
+.idea/
+.cache/
+compile_commands.json
+
+# Runtime data (future persistence)
+*.rdb
+*.aof
+*.wal
